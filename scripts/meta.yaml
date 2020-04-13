@@ -1,0 +1,18 @@
+package:
+  name: torchserve
+  version: "0.1"
+
+requirements:
+  build:
+    - future
+    - psutil
+    - pytorch
+    - torchvision
+    - cudatoolkit >=10.1
+  run:
+    - python
+
+about:
+  home: http://pytorch.org/serve
+  summary: TorchServe - A Flexible Model Server for PyTorch
+
