@@ -544,6 +544,14 @@ public final class ConfigManager {
         return Integer.parseInt(value);
     }
 
+    public int getDefaultBatchSize() {
+        return Integer.parseInt(prop.getProperty("batch_size", "1"));
+    }
+
+    public int getDefaultBatchDelay() {
+        return Integer.parseInt(prop.getProperty("max_batch_delay", "100"));
+    }
+
     public int getDefaultResponseTimeout() {
         return Integer.parseInt(prop.getProperty(TS_DEFAULT_RESPONSE_TIMEOUT, "120"));
     }
