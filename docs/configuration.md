@@ -185,3 +185,6 @@ Most of those properties are designed for performance tuning. Adjusting those nu
 * decode_input_request: Configuration to let backend workers to decode requests, when the content type is known.
 If this is set to "true", backend workers do "Bytearray to JSON object" conversion when the content type is "application/json" and
 the backend workers convert "Bytearray to utf-8 string" when the Content-Type of the request is set to "text*". default: true  
+* `batch_size`: This is the maximum batch size that a model is expected to handle. default: 1.
+* `max_batch_delay`: This is the maximum batch delay time TorchServe waits to receive `batch_size` number of requests. If TorchServe doesn't receive `batch_size` number of requests
+before this timer time's out, it sends what ever requests that were received to the model `handler`. default: 100 seconds.
