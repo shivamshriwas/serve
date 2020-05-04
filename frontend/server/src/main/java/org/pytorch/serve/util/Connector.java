@@ -35,7 +35,6 @@ public class Connector {
                     Pattern.CASE_INSENSITIVE);
 
     private static boolean useNativeIo = ConfigManager.getInstance().useNativeIo();
-    private static final int PORT_RANGE = 65535;
 
     private boolean uds;
     private String socketPath;
@@ -106,7 +105,7 @@ public class Connector {
         } else {
             port = Integer.parseInt(listeningPort);
         }
-        if (port > PORT_RANGE) {
+        if (port > Short.MAX_VALUE*2+1) {
             throw new IllegalArgumentException("Invalid port number: " + binding);
         }
         return new Connector(port, false, host, String.valueOf(port), ssl, management);
