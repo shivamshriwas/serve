@@ -73,7 +73,7 @@ public final class ConfigManager {
     private static final String TS_MAX_REQUEST_SIZE = "max_request_size";
     private static final String TS_MAX_RESPONSE_SIZE = "max_response_size";
     private static final String TS_DEFAULT_SERVICE_HANDLER = "default_service_handler";
-    private static final String MODEL_SERVER_HOME = "model_server_home";
+    private static final String TS_MODEL_SERVER_HOME = "model_server_home";
     private static final String TS_MODEL_STORE = "model_store";
     private static final String TS_SNAPSHOT_STORE = "snapshot_store";
     private static final String TS_MODEL_SNAPSHOT = "model_snapshot";
@@ -308,11 +308,11 @@ public final class ConfigManager {
     }
 
     public String getModelServerHome() {
-        String tsHome = System.getenv("MODEL_SERVER_HOME");
+        String tsHome = System.getenv("TS_MODEL_SERVER_HOME");
         if (tsHome == null) {
-            tsHome = System.getProperty(MODEL_SERVER_HOME);
+            tsHome = System.getProperty(TS_MODEL_SERVER_HOME);
             if (tsHome == null) {
-                tsHome = getProperty(MODEL_SERVER_HOME, null);
+                tsHome = getProperty(TS_MODEL_SERVER_HOME, null);
                 if (tsHome == null) {
                     tsHome = getCanonicalPath(findTsHome());
                     return tsHome;
