@@ -1,17 +1,27 @@
 ﻿## Troubleshooting guide.
-Refer to this section for common issues faced while deploying your Pytorch models using Torchserve and their corresponding troubleshooting steps.
+Refer this section for common issues faced while deploying your Pytorch models using Torchserve and their corresponding troubleshooting steps.
 
-#### "Failed to bind to address: http://127.0.0.1:8080", port 8080/8081 already in use. [[542](https://github.com/pytorch/serve/issues/542)]
+* [Deployment and config issues](#deployment-and-config-issues)
+* [Snapshot related issues](#snapshot-related-issues)
+* [API related issues](#api-relate-issues)
+ * [Model-archiver](#model-archiver)
+
+
+### Deployment and config issues
+#### "Failed to bind to address: http://127.0.0.1:8080", port 8080/8081 already in use.
 The port number 8080/8081 is already used by some other application or service, it can be verified by using cmd `ss -ntl | grep 8080`.  There are two ways to troubleshoot this issue
 either kill the process which is using port 8080/8081 or run Torchserve on different ports other than 8080 & 8081.
 
 Refer  [configuration.md](https://github.com/pytorch/serve/blob/master/docs/configuration.md) for more details.
 
+Relavant issues:  [[542](https://github.com/pytorch/serve/issues/542)]
 
 #### "java.lang.NoSuchMethodError" when starting Torchserve.[[473](https://github.com/pytorch/serve/issues/473)]
 This error usually occurs when Java 11 is not installed or used. Java 11 is required by Torchserve and java versions before it is not supported.
 
-####  Unable to send big files for inference request [[335](https://github.com/pytorch/serve/issues/335)]?
+Relavant issues: [[#473](https://github.com/pytorch/serve/issues/473)]
+
+####  Unable to send big files for inference request?
 The default max request size and response size is roughly 6.5 Mb. Hence any file size greater than 6.5mb cannot be uploaded.
 To resolve this update `max_request_size` and `max_response_size` in a config.properties file and start the torchserve with this config file.
 ```
@@ -22,10 +32,12 @@ $ torchserve --start --model-store model_store --ts-config /path/to/config.prope
 ```
 You can also use environment variables to set these values.
 Refer  [configuration.md](https://github.com/pytorch/serve/blob/master/docs/configuration.md) for more details.
+Relavant issues: [[#335](https://github.com/pytorch/serve/issues/335)]
 
-
-#### How to disable Snapshot feature?[[383](https://github.com/pytorch/serve/issues/383), [512](https://github.com/pytorch/serve/issues/512)]
+###  Snapshot related issues
+#### How to disable Snapshot feature?
 By default, the snapshot feature is enabled. To disable snapshot feature start torchserve using --ncs flag or  specify config file using --ts-config path/to/config 
+Relavant issues:[[#383](https://github.com/pytorch/serve/issues/383), [#512](https://github.com/pytorch/serve/issues/512)]
 
 #### Torchserve stopped after restart with "InvalidSnapshotException" exception.
 Torchserve when restarted uses the last snapshot config file to restore its state of models and their number of workers.
@@ -42,9 +54,13 @@ The snapshots are by default in `{LOG_LOCATION}\config` directory, where `{LOG_L
 
 Refer  [snapshot.md](https://github.com/pytorch/serve/blob/master/docs/snapshot.md) for more details.
 
-#### Register model: Failed with exception "ConflictStatusException" & error code 409.[[500](https://github.com/pytorch/serve/issues/500)]
+###  API related issues
+
+#### Register model: Failed with exception "ConflictStatusException" & error code 409.
 This gives a clear message that the model we are trying to register conflicts with an already existing model.
 To resolve this change the model version when creating a mar file or register a model with a different name.
+
+Relavant issues: [[#500](https://github.com/pytorch/serve/issues/500)]
 
 #### Register model: Failed with exception "DownloadModelException" & error code 400.
 Torchserve was unable to download the mar file in this case.
@@ -60,3 +76,4 @@ In this case, the model is registered but there no workers spawned for the model
 You can verify the number of workers using 
 `curl -X GET"http://localhost:8081/models/<model_name>"
 `
+### Model-archiver
