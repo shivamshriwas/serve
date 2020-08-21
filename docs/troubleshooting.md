@@ -4,12 +4,12 @@ Refer this section for common issues faced while deploying your Pytorch models u
 * [Deployment and config issues](#deployment-and-config-issues)
 * [Snapshot related issues](#snapshot-related-issues)
 * [API related issues](#api-relate-issues)
- * [Model-archiver](#model-archiver)
+* [Model-archiver](#model-archiver)
 
 
 ### Deployment and config issues
 #### "Failed to bind to address: http://127.0.0.1:8080", port 8080/8081 already in use.
-The port number 8080/8081 is already used by some other application or service, it can be verified by using cmd `ss -ntl | grep 8080`.  There are two ways to troubleshoot this issue
+Maybe the port number 8080/8081 is already used by some other application or service, it can be verified by using cmd `ss -ntl | grep 8080`.  There are two ways to troubleshoot this issue
 either kill the process which is using port 8080/8081 or run Torchserve on different ports other than 8080 & 8081.
 
 Refer  [configuration.md](https://github.com/pytorch/serve/blob/master/docs/configuration.md) for more details.
@@ -77,3 +77,25 @@ You can verify the number of workers using
 `curl -X GET"http://localhost:8081/models/<model_name>"
 `
 ### Model-archiver
+
+#### How can add model  specific custom dependency?
+You can add your dependency files using `--extra-files` flag while creating mar file. These dependency files can be of any type like zip, egg, json etc. You may have to write a custom handler to use these files as required.
+
+Relavant issues: [[#566](https://github.com/pytorch/serve/issues/566)]
+
+#### How can I resolve model  specific python dependency ?
+You can provide a requirements.txt while creating a mar file using "--requirements-file/ -r"flag.
+
+You can refer to the [waveglow text-to-speech-synthesizer](https://github.com/pytorch/serve/tree/master/examples/text_to_speech_synthesizer) example
+
+-   [waveglow mar creation script](https://github.com/pytorch/serve/blob/master/examples/text_to_speech_synthesizer/create_mar.sh)
+-   [waveglow handler](https://github.com/pytorch/serve/blob/master/examples/text_to_speech_synthesizer/waveglow_handler.py#L57)
+
+Relavant issues: [[#566](https://github.com/pytorch/serve/issues/566)]
+
+Refer [Torch model archiver cli](https://github.com/pytorch/serve/blob/master/model-archiver/README.md#torch-model-archiver-command-line-interface) for more details.
+
+#### I have added  requirements.txt in my mar file but the packages listed are not getting installed.
+By default model specific custom python pakages feature is disabled, enable this by  setting install_py_dep_per_model
+to true.
+Refer [Allow model specific custom python packages](https://github.com/pytorch/serve/blob/master/docs/configuration.md#allow-model-specific-custom-python-packages) for more details.

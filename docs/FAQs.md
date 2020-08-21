@@ -1,4 +1,4 @@
-# FAQ'S
+﻿# FAQ'S
 Contents of this document.
 * [General](#general)
 * [Deployment and config](#deployment-and-config)
@@ -50,7 +50,7 @@ Yes, Torchserve API ports are configurable using a properties file or enviroment
 
 
 ### How can I resolve model  specific python dependency ?
-You can provide a requirements.txt while creating a mar file using "requirements-file/-r"flag. Also you can your dependency files using "--extra-files" flag. Refer  [configuration.md](https://github.com/pytorch/serve/blob/master/docs/configuration.md) for more details.
+You can provide a requirements.txt while creating a mar file using "--requirements-file/ -r"flag. Also you can your add dependency files using "--extra-files" flag. Refer  [configuration.md](https://github.com/pytorch/serve/blob/master/docs/configuration.md) for more details.
 
 
 ## API
@@ -78,7 +78,23 @@ Yes you can deploy your model with no-code/ zero code by using builtin default h
 
 ## Model-archiver
  Relavant documents
- -[Model-archiver ](https://github.com/pytorch/serve/tree/master/model-archiver#torch-model-archiver-for-torchserve)
+ - [Model-archiver ](https://github.com/pytorch/serve/tree/master/model-archiver#torch-model-archiver-for-torchserve)
+ - [Docker Readme](https://github.com/pytorch/serve/blob/master/docker/README.md)
 
 ### What is a mar file?
 A mar file is nothing but a zip file consisting of all model artifacts with ".mar" extension. The cmd line utility *torch-model-archiver*  is used to create mar file.
+
+### How can create mar file using Torchserve docker container?
+Yes, you create your mar file using a Torchserve conatiner. Follow the steps given [here](https://github.com/pytorch/serve/blob/master/docker/README.md#create-torch-model-archiver-from-container).
+
+### Can I add multiple serialized files in single mar file?
+Currently `TorchModelArchiver` allows supplying only one serialized file with `--serialized-file` parameter while creating the mar. However, you can supply any number and any type of file with `--extra-files` flag. All the files supplied in the mar file are available in `model_dir` location which can be accessed through the context object supplied to the handler's entry point.
+
+Sample code snippet:
+
+
+```
+properties = context.system_properties
+model_dir = properties.get("model_dir")
+```
+Refer [Torch model archiver cli](https://github.com/pytorch/serve/blob/master/model-archiver/README.md#torch-model-archiver-command-line-interface) for more details.
