@@ -14,9 +14,12 @@ import java.util.Map;
 import org.pytorch.serve.archive.ModelException;
 import org.pytorch.serve.archive.ModelNotFoundException;
 import org.pytorch.serve.archive.ModelVersionNotFoundException;
+import org.pytorch.serve.metrics.Dimension;
+import org.pytorch.serve.metrics.Metric;
 import org.pytorch.serve.metrics.api.MetricAggregator;
 import org.pytorch.serve.openapi.OpenApiUtils;
 import org.pytorch.serve.servingsdk.ModelServerEndpoint;
+import org.pytorch.serve.util.ConfigManager;
 import org.pytorch.serve.util.NettyUtils;
 import org.pytorch.serve.util.messages.InputParameter;
 import org.pytorch.serve.util.messages.RequestInput;
@@ -35,6 +38,10 @@ import org.slf4j.LoggerFactory;
 public class InferenceRequestHandler extends HttpRequestHandlerChain {
 
     private static final Logger logger = LoggerFactory.getLogger(InferenceRequestHandler.class);
+    private static final org.apache.log4j.Logger loggerTsMetrics =
+            org.apache.log4j.Logger.getLogger(ConfigManager.MODEL_SERVER_METRICS_LOGGER);
+    private static final Dimension DIMENSION = new Dimension("Level", "Host");
+
 
     /** Creates a new {@code InferenceRequestHandler} instance. */
     public InferenceRequestHandler(Map<String, ModelServerEndpoint> ep) {
@@ -46,7 +53,8 @@ public class InferenceRequestHandler extends HttpRequestHandlerChain {
             ChannelHandlerContext ctx,
             FullHttpRequest req,
             QueryStringDecoder decoder,
-            String[] segments)
+            String[] segments,
+            long apiStartTime)
             throws ModelException {
         if (isInferenceReq(segments)) {
             if (endpointMap.getOrDefault(segments[1], null) != null) {
@@ -59,18 +67,18 @@ public class InferenceRequestHandler extends HttpRequestHandlerChain {
                     case "models":
                     case "invocations":
                         validatePredictionsEndpoint(segments);
-                        handleInvocations(ctx, req, decoder, segments);
+                        handleInvocations(ctx, req, decoder, segments, apiStartTime);
                         break;
                     case "predictions":
-                        handlePredictions(ctx, req, segments);
+                        handlePredictions(ctx, req, segments, apiStartTime);
                         break;
                     default:
-                        handleLegacyPredict(ctx, req, decoder, segments);
+                        handleLegacyPredict(ctx, req, decoder, segments, apiStartTime);
                         break;
                 }
             }
         } else {
-            chain.handleRequest(ctx, req, decoder, segments);
+            chain.handleRequest(ctx, req, decoder, segments, apiStartTime);
         }
     }
 
@@ -100,7 +108,7 @@ public class InferenceRequestHandler extends HttpRequestHandlerChain {
     }
 
     private void handlePredictions(
-            ChannelHandlerContext ctx, FullHttpRequest req, String[] segments)
+            ChannelHandlerContext ctx, FullHttpRequest req, String[] segments, long apiStartTime)
             throws ModelNotFoundException, ModelVersionNotFoundException {
         if (segments.length < 3) {
             throw new ResourceNotFoundException();
@@ -111,14 +119,15 @@ public class InferenceRequestHandler extends HttpRequestHandlerChain {
         if (segments.length == 4) {
             modelVersion = segments[3];
         }
-        predict(ctx, req, null, segments[2], modelVersion);
+        predict(ctx, req, null, segments[2], modelVersion, apiStartTime);
     }
 
     private void handleInvocations(
             ChannelHandlerContext ctx,
             FullHttpRequest req,
             QueryStringDecoder decoder,
-            String[] segments)
+            String[] segments,
+            long apiStartTime)
             throws ModelNotFoundException, ModelVersionNotFoundException {
         String modelName =
                 ("invocations".equals(segments[1]))
@@ -129,14 +138,15 @@ public class InferenceRequestHandler extends HttpRequestHandlerChain {
                 modelName = ModelManager.getInstance().getStartupModels().iterator().next();
             }
         }
-        predict(ctx, req, decoder, modelName, null);
+        predict(ctx, req, decoder, modelName, null, apiStartTime);
     }
 
     private void handleLegacyPredict(
             ChannelHandlerContext ctx,
             FullHttpRequest req,
             QueryStringDecoder decoder,
-            String[] segments)
+            String[] segments,
+            long apiStartTime)
             throws ModelNotFoundException, ModelVersionNotFoundException {
 
         String modelVersion = null;
@@ -146,7 +156,7 @@ public class InferenceRequestHandler extends HttpRequestHandlerChain {
             throw new ResourceNotFoundException();
         }
 
-        predict(ctx, req, decoder, segments[1], modelVersion);
+        predict(ctx, req, decoder, segments[1], modelVersion, apiStartTime);
     }
 
     private void predict(
@@ -154,7 +164,8 @@ public class InferenceRequestHandler extends HttpRequestHandlerChain {
             FullHttpRequest req,
             QueryStringDecoder decoder,
             String modelName,
-            String modelVersion)
+            String modelVersion,
+            long apiStartTime)
             throws ModelNotFoundException, ModelVersionNotFoundException {
         RequestInput input = parseRequest(ctx, req, decoder);
         if (modelName == null) {
@@ -178,6 +189,9 @@ public class InferenceRequestHandler extends HttpRequestHandlerChain {
         }
 
         MetricAggregator.handleInferenceMetric(modelName, modelVersion);
+        String frontendTime=String.valueOf(System.currentTimeMillis() - apiStartTime);
+        loggerTsMetrics.info(new Metric("FrontendTime", frontendTime , "ms",
+                ConfigManager.getInstance().getHostName(), DIMENSION));
         Job job = new Job(ctx, modelName, modelVersion, WorkerCommands.PREDICT, input);
         if (!ModelManager.getInstance().addJob(job)) {
             String responseMessage =
